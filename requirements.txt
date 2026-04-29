@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────
+# financial_sentiment — requirements.txt
+# Python 3.11  |  Mac M4 (MPS) / Linux (CUDA)
+# ─────────────────────────────────────────────
+
+# ── Data & scraping ──────────────────────────
+requests==2.31.0
+feedparser==6.0.11          # RSS parsing (Reuters, FT)
+beautifulsoup4==4.12.3
+lxml==5.2.1
+newsapi-python==0.2.7       # NewsAPI wrapper
+alpha-vantage==2.3.1        # Alpha Vantage news + prices
+
+# ── Data processing ──────────────────────────
+pandas==2.2.2
+numpy==1.26.4
+pyarrow==16.0.0             # Parquet storage (eficiente para series temporales)
+SQLAlchemy==2.0.30          # ORM para SQLite cache
+
+# ── NLP ──────────────────────────────────────
+transformers==4.41.1        # FinBERT via HuggingFace
+torch==2.3.0                # Backend PyTorch (MPS en M4, CUDA en Linux)
+vaderSentiment==3.3.2       # Baseline rápido sin GPU
+nltk==3.8.1                 # Tokenización auxiliar
+sentence-transformers==3.0.0  # Por si exploramos embeddings
+
+# ── Features & ML ────────────────────────────
+scikit-learn==1.5.0
+imbalanced-learn==0.12.3    # SMOTE (consistente con el TFM)
+ta==0.11.0                  # Technical Analysis (40 indicadores del TFM)
+
+# ── Deep Learning (LSTM) ─────────────────────
+tensorflow==2.16.2          # Consistente con el TFM
+keras==3.3.3
+
+# ── Visualización ────────────────────────────
+matplotlib==3.9.0
+seaborn==0.13.2
+plotly==5.22.0              # Gráficos interactivos para el análisis
+
+# ── Notebooks ────────────────────────────────
+jupyter==1.0.0
+ipykernel==6.29.4
+ipywidgets==8.1.3
+
+# ── Utilidades ───────────────────────────────
+python-dotenv==1.0.1        # Variables de entorno (.env para API keys)
+loguru==0.7.2               # Logging limpio
+tqdm==4.66.4                # Progress bars
+pyyaml==6.0.1               # Config files
+schedule==1.2.2             # Scraping periódico automatizado
+tenacity==8.3.0             # Retry logic para requests

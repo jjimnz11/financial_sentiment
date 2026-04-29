@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(caffeinate *)",
+      "Bash(pip3 install *)",
+      "Bash(python3 src/scraper/gdelt_scraper.py --start 2023-01-01 --end 2023-01-01)",
+      "Bash(python3 *)",
+      "Bash(wait)"
+    ]
+  }
+}

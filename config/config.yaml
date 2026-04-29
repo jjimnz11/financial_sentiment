@@ -1,0 +1,141 @@
+# ─────────────────────────────────────────────
+# financial_sentiment — config/config.yaml
+# Configuración central del proyecto
+# ─────────────────────────────────────────────
+
+project:
+  name: "financial_sentiment"
+  version: "0.1.0"
+  description: "NLP sentiment analysis on financial news for crisis prediction"
+
+# ── Fuentes de datos ─────────────────────────
+sources:
+  rss:
+    reuters:
+      url: "https://feeds.reuters.com/reuters/businessNews"
+      name: "Reuters Business"
+      enabled: true
+    reuters_markets:
+      url: "https://feeds.reuters.com/reuters/UKdomesticNews"
+      name: "Reuters Markets"
+      enabled: true
+    ft:
+      url: "https://www.ft.com/rss/home/uk"
+      name: "Financial Times"
+      enabled: true
+    wsj:
+      url: "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
+      name: "WSJ Markets"
+      enabled: true
+
+  newsapi:
+    # API key en .env → NEWSAPI_KEY
+    queries:
+      - "stock market crash"
+      - "financial crisis"
+      - "recession economy"
+      - "S&P 500 volatility"
+      - "Federal Reserve interest rates"
+    language: "en"
+    page_size: 100
+    lookback_days: 30          # Histórico disponible en plan free
+
+  alpha_vantage:
+    # API key en .env → ALPHA_VANTAGE_KEY
+    tickers:
+      - "SPY"                  # S&P 500 ETF
+      - "QQQ"                  # Nasdaq ETF
+      - "GLD"                  # Gold ETF
+    topics:
+      - "financial_markets"
+      - "economy_macro"
+      - "finance"
+
+# ── Scraping ─────────────────────────────────
+scraping:
+  interval_minutes: 60         # Cada cuánto scrapear en modo live
+  request_delay_seconds: 2     # Delay entre requests (anti-ban)
+  timeout_seconds: 10
+  max_retries: 3
+  user_agent: "Mozilla/5.0 (compatible; ResearchBot/1.0)"
+  cache_ttl_hours: 6           # Tiempo de vida del cache
+
+# ── NLP ──────────────────────────────────────
+nlp:
+  models:
+    finbert:
+      name: "ProsusAI/finbert"  # HuggingFace model ID
+      max_length: 512
+      batch_size: 32
+      device: "auto"            # auto detecta MPS (Mac M4) o CUDA
+    vader:
+      enabled: true             # Siempre activo como baseline
+
+  aggregation:
+    windows:
+      - 24                      # horas — pregunta de investigación principal
+      - 48                      # horas — pregunta de investigación secundaria
+      - 6                       # horas — granularidad fina
+    method: "ewm"               # exponential weighted mean (más peso a noticias recientes)
+    ewm_halflife_hours: 12
+
+  score_columns:
+    # Columnas que se generan en el pipeline NLP
+    - "sentiment_score"         # [-1, 1] FinBERT compound
+    - "sentiment_label"         # negative / neutral / positive
+    - "vader_compound"          # [-1, 1] VADER baseline
+    - "sentiment_24h_ewm"       # agregado ventana 24h
+    - "sentiment_48h_ewm"       # agregado ventana 48h
+    - "sentiment_volatility_24h" # desviación std del sentimiento
+
+# ── Features para el LSTM ────────────────────
+features:
+  # Features originales del TFM (40 indicadores técnicos + macro)
+  base_features: "data/processed/tfm_features.parquet"  # copiar del TFM
+
+  # Features nuevas de sentimiento (output del pipeline NLP)
+  sentiment_features:
+    - "sentiment_24h_ewm"
+    - "sentiment_48h_ewm"
+    - "sentiment_volatility_24h"
+    - "news_volume_24h"         # nº de noticias en 24h (proxy de atención mediática)
+
+  # Target (mismo que el TFM)
+  target: "crisis_binary"       # 1 = crisis (VIX > 25 + NASDAQ/Gold divergencia)
+
+# ── Modelo LSTM ───────────────────────────────
+model:
+  sequence_length: 60           # días de lookback (igual que el TFM)
+  epochs: 100
+  batch_size: 32
+  learning_rate: 0.001
+  dropout: 0.2
+  early_stopping_patience: 15
+  validation_split: 0.15
+
+  # Experimentos a comparar (ablation study)
+  experiments:
+    baseline:
+      name: "LSTM sin sentimiento"
+      features: "base_only"
+    sentiment_24h:
+      name: "LSTM + sentimiento 24h"
+      features: "base_plus_24h"
+    sentiment_48h:
+      name: "LSTM + sentimiento 48h"
+      features: "base_plus_48h"
+    sentiment_full:
+      name: "LSTM + todas las features de sentimiento"
+      features: "base_plus_all_sentiment"
+
+# ── Rutas ─────────────────────────────────────
+paths:
+  data:
+    raw: "data/raw"
+    processed: "data/processed"
+    cache: "data/cache"
+  outputs:
+    figures: "outputs/figures"
+    reports: "outputs/reports"
+  logs: "logs"
+  models: "outputs/models"
