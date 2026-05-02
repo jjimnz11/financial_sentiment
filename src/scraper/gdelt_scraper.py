@@ -7,8 +7,9 @@ Guarda UN registro por día en MongoDB — no artículos crudos.
 import os
 import io
 import csv
+import sys
 
-csv.field_size_limit(10 * 1024 * 1024)
+csv.field_size_limit(sys.maxsize)
 import zipfile
 import requests
 from datetime import datetime, timedelta, timezone

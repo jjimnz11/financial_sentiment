@@ -59,3 +59,7 @@ logs/
 
 # Reportes generados (los subimos manualmente si queremos)
 outputs/reports/
+
+# Claude Code
+CLAUDE.md
+.claude/
